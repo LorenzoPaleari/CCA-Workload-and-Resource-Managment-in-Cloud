@@ -1,0 +1,28 @@
+[PARSEC] [---------- Beginning of output ----------]
+Generating input file ...
+Running /parsec/ext/splash2x/kernels/radix/inst/amd64-linux.gcc/bin/radix -p1 -r4096 -n268435456 -m2147483647:
+
+Integer Radix Sort
+     268435456 Keys
+     1 Processors
+     Radix = 4096
+     Max key = 2147483647
+
+
+                 PROCESS STATISTICS
+               Total            Rank            Sort
+ Proc          Time             Time            Time
+    0       50779946         2791143        47988787
+
+                 TIMING INFORMATION
+Start time                        : 1680280903416367
+Initialization finish time        : 1680280947742717
+Overall finish time               : 1680280998522663
+Total time with initialization    :         95106296
+Total time without initialization :         50779946
+
+
+real	1m35.861s
+user	1m21.719s
+sys	0m8.914s
+[PARSEC] [----------    End of output    ----------]

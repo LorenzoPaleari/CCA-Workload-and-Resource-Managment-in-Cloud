@@ -1,0 +1,45 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usepackage{fancyvrb}
+\usepackage{enumitem}
+\usepackage{hhline}
+\usepackage{colortbl}
+\usepackage{placeins}
+\usepackage{hyperref}
+\usepackage{booktabs, multirow} % for borders and merged ranges
+\usepackage{soul}% for underlines
+\usepackage{changepage,threeparttable} % for wide tables
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+\begin{document}
+
+\input{titlepage} 
+
+\newpage
+
+% \include{part1}
+% \include{part2} 
+ 
+% CCA colorscheme
+\definecolor{blackscholes}{HTML}{CCA000}
+\definecolor{canneal}{HTML}{CCCCAA}
+\definecolor{dedup}{HTML}{CCACCA}
+\definecolor{ferret}{HTML}{AACCCA}
+\definecolor{freqmine}{HTML}{0CCA00}
+\definecolor{radix}{HTML}{00CCA0}
+\definecolor{vips}{HTML}{CC0A00}
+
+\newcommand{\colored}[1]{\textcolor{#1}{#1}}
+\newcommand{\coloredcell}[1]{\cellcolor{#1} #1}
+
+
+\include{part3}
+\include{part4}
+
+\end{document}

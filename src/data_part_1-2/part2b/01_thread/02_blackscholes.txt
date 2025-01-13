@@ -1,0 +1,10 @@
+[PARSEC] [---------- Beginning of output ----------]
+PARSEC Benchmark Suite Version 3.0-beta-20150206
+Num of Options: 10000000
+Num of Runs: 100
+Size of data: 400000000
+
+real	2m5.403s
+user	2m4.435s
+sys	0m0.944s
+[PARSEC] [----------    End of output    ----------]

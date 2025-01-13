@@ -1,0 +1,436 @@
+\section*{Part 4 [76 points]}
+
+\begin{enumerate}
+\itemsep 2em
+    
+    \item \textbf{[20 points]} Use the following \texttt{mcperf} command to vary QPS from 5K to 125K in order to answer the following questions: 
+    \begin{Verbatim}[fontsize=\small]
+$ ./mcperf -s INTERNAL_MEMCACHED_IP --loadonly 
+$ ./mcperf -s INTERNAL_MEMCACHED_IP -a INTERNAL_AGENT_IP  \
+           --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 5 \ 
+           --scan 5000:125000:5000
+    \end{Verbatim}
+
+    a) [10 points] How does memcached performance vary with the number of threads ($T$) and number of cores ($C$) allocated to the job? In a single graph, plot the 95th percentile latency (y-axis) vs. QPS (x-axis) of memcached (running alone, with no other jobs collocated on the server) for the following configurations (one line each):
+    \begin{itemize}
+        \item Memcached with $T$=1 thread, $C$=1 core
+        \item Memcached with $T$=1 thread, $C$=2 cores
+        \item Memcached with $T$=2 threads, $C$=1 core
+        \item Memcached with $T$=2 threads, $C$=2 cores
+    \end{itemize}
+    
+    Label the axes in your plot. State how many runs you averaged across (we recommend three runs) and include error bars. The readability of your plot will be part of your grade.
+    
+    \textbf{Plots:} % Put your plots here
+
+    % Plot plot1_1.pdf is the plot for T=1, C=1
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/part4/plot1_1.pdf}
+        \caption{95th percentile latency vs. QPS for memcached avaraged over 3 runs}
+        \label{fig:part4_plot1_1}
+    \end{figure}
+
+    Error bars are present in all plots, but some measurement were too consistent and the error is too little to be visible on some part of the graph. 105K QPS in 2 core 1 thread is reached just one time out of 3 runs, we reported it for completeness.
+    
+    What do you conclude from the results in your plot? Summarize in 2-3 brief sentences how memcached performance varies with the number of threads and cores.
+    
+    \textbf{Summary:} The results indicate that memcached performance is least efficient with 1 core and 2 threads, likely due to the overhead of managing an extra thread on a single core and due to the threads competing with each other to use the core. Maximum performance is observed with a configuration of 2 cores and 2 threads, which allows the threads to operate in parallel. Other configurations, specifically 2 cores with 1 thread, yield similar performance to a 1 core 1 thread setup, due to the singular thread being confined to one core.
+    
+    % The worst performing configuration is clearly 1 core 2 threads. This is due to the overhead of having an additional thread when only one core is available. The best performing configuration is 2 cores 2 threads. This is due to the fact that the threads can be scheduled on different cores, and thus the threads can run in parallel. The other two configurations are in between these two extremes, with really similar performance. This is due to the fact that with 2 cores but only 1 thread the thread will be scheduled exclusively on one core, and thus the performance is similar to the 1 core 1 thread configuration.    
+    
+    b) [2 points] To support the highest load in the trace (125K QPS) without violating the 1ms latency SLO, how many memcached threads ($T$) and CPU cores ($C$) will you need?
+    
+    \textbf{Answer:} From the plot it is clearly visible that the only configuration that did not violate the SLO at 125K QPS was 2 Cores 2 Threads. Therefore, we will need 2 Cores and 2 Threads to support the highest load in the trace without violating the 1ms latency SLO.
+    
+    c) [1 point] Assume you can change the number of cores allocated to memcached dynamically as the QPS varies from 5K to 125K, but the number of threads is fixed when you launch the memcached job. How many memcached threads ($T$) do you propose to use to guarantee the 1ms 95th percentile latency SLO while the load varies between 5K to 125K QPS?
+    
+    \textbf{Answer:} If you can change the number of cores allocated to memcached dynamically as the QPS varies from 5K to 125K, but the number of threads is fixed when you launch the memcached job, then you should use 2 memcached threads ($T$) to guarantee the 1ms 95th percentile latency SLO while the load varies between 5K to 125K QPS. This is because the configuration of 2 cores and 2 threads provided the best performance in the plot and is the only one capable od handling 125K QPS, by fixing the number of threads to 2, you can ensure that the threads can be scheduled on different cores as the number of cores allocated to memcached changes dynamically. While is true that 2 cores and 1 thread is the configuration with the worst performance, in case the load becomes to high we can change to 2 cores and 2 threads to ensure that the SLO is not violated.
+    
+    d) [7 points] Run memcached with the number of threads $T$ that you proposed in (c) and measure performance with $C=1$ and $C=2$. Use the aforementioned \texttt{mcperf} command to sweep QPS from 5K to 125K.
+
+    Measure the CPU utilization on the memcached server at each 5-second load time step.
+    
+    Plot the performance of memcached using 1-core ($C=1$) and using 2 cores ($C=2$) in \textbf{two separate graphs}, for $C=1$ and $C=2$,  respectively. In each graph, plot QPS on the x-axis, ranging from 0 to 130K. In each graph, use two y-axes. Plot the 95th percentile latency on the left y-axis. Draw a dotted horizontal line at the 1ms latency SLO. Plot the CPU utilization (ranging from 0\% to 100\% for $C=1$ or 200\% for $C=2$) on the right y-axis. For simplicity, we do not require error bars for these plots. 
+    
+    \textbf{Plots:} % Put your plots here
+    
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/part4/plot1_1_1.pdf}
+        \caption{95th percentile latency vs. QPS for memcached with 1 core}
+    \label{fig:part4_plot1_2}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/part4/plot1_1_2.pdf}
+        \caption{95th percentile latency vs. QPS for memcached with 2 cores}
+    \label{fig:part4_plot1_3}
+    \end{figure}
+
+    % new page
+    \newpage
+    
+    \item \textbf{[17 points]} You are now given a dynamic load trace for memcached, which varies QPS randomly between 5K and 100K in 10 second time intervals. Use the following command to run this trace: 
+        \begin{Verbatim}[fontsize=\small]
+$ ./mcperf -s INTERNAL_MEMCACHED_IP --loadonly 
+$ ./mcperf -s INTERNAL_MEMCACHED_IP -a INTERNAL_AGENT_IP \ 
+           --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 1800 \ 
+           --qps_interval 10 --qps_min 5000 --qps_max 100000
+\end{Verbatim}
+    
+    Note that you can also specify a random seed in this command using the \texttt{--qps\_seed} flag. 
+
+    For this and the next questions, feel free to reduce the mcperf measurement duration (\texttt{-t} parameter, now fixed to 30 minutes) as long as you have at the end at least 1 minute of memcached running alone.
+    
+    Design and implement a controller to schedule memcached and the PARSEC benchmarks on the 4-core VM. The goal of your scheduling policy is to successfully complete all PARSEC jobs as soon as possible without violating the 1ms 95th percentile latency for memcached. \textbf{Your controller should not assume prior knowledge of the dynamic load trace. You should design your policy to work well regardless of the random seed.} The PARSEC jobs need to use the native dataset, i.e., provide the option \texttt{-i native} when running them. Also make sure to check that all the PARSEC jobs complete successfully and do not crash. Note that PARSEC jobs may fail if given insufficient resources.
+    
+    Describe how you designed and implemented your scheduling policy. Include the source code of your controller in the zip file you submit. 
+
+    \begin{itemize}
+        \item Brief overview of the scheduling policy (max 10 lines):
+        
+    \textbf{Answer:} The scheduling policy manages CPU resources between memcached and the PARSEC benchmark jobs using Docker containers. Two job queues handle single-core and dual-core jobs. The policy keeps a check on CPU usage and adjusts memcached's CPU affinity as required. Memcached primarily operates on core 0, occasionally utilizing core 1 based on load. High CPU usage triggers a pause on the core 1 job, allocating its CPU to memcached. Low usage lets the paused job resume or starts a new one, confining memcached to core 0. High CPU usage is defined as above 80\% on a single core or less than 130\% combined on two cores. The policy assigns core 1 to canneal, vips, blackscholes, and dedup, while cores 2 and 3 are allocated to ferret, freqmine, and radix. After radix, ferret and freqmine complete, other jobs can also utilize cores 2 and 3.
+
+     % Put your solution here
+    % The policy is designed to ensure that the memcached process is allocated the appropriate number of CPU cores based on the CPU utilization of the system, while also ensuring that the PARSEC benchmark jobs are allocated the appropriate number of CPU cores and threads based on their resource requirements and the CPU utilization of the system. The policy is implemented using a combination of if-else statements and while loops to continuously monitor the system and adjust the resource allocation of the Docker containers and memcached process as needed.
+
+    % The program uses two queues, one for jobs that require one core and another for jobs that require two cores. The program starts by creating Docker containers for each job and adding them to the appropriate queue. The program then continuously checks the CPU utilization and adjusts the CPU affinity of the memcached process accordingly. memcached can run in cores 0 and 1, depending on the load. If the CPU utilization is high, the program pauses any running job in core 1 and allocates its CPU core to memcached. If the CPU utilization is low, the program resumes the paused job or starts a new job if there are no paused jobs, and removes memcached from core 1 reserving core 0 exclusively. The program ends when all jobs have completed successfully and memcached has run for 60 seconds afterwards.
+
+    % CPU utilization is only measured for the cores where memcached is running. It is considered high if it is greater than 80% when it is running only one core one core and if the sum of the CPU utilization of the two cores is less than 130% when two cores are scheduled.
+
+    % The program allocates sequentially core 1 to each of the following jobs: canneal, vips, blackscholes, and dedup. The program allocates cores 2 and 3 exlusively and sequentially to each of the following jobs: ferret, and freqmine.
+
+    % In case both ferret and freqmine have finished, the other jobs that tun exclusisvely on core 1 are allowed to run on core 2 and 3 as well.
+    % The scheduling policy focuses on managing the CPU resources for the memcached process and the PARSEC benchmark jobs. Using conditions and loops, the policy continuously checks the system and adjusts resource allocation for the Docker containers and memcached as needed.
+
+    % Two job queues are used: one for single-core jobs and another for dual-core jobs. Docker containers are created for each job and added to the right queue. The policy then monitors CPU usage, adjusting the memcached process's CPU affinity accordingly.
+
+    % Memcached runs on core 0 and sometimes on core 1, depending on the load. When the CPU usage is high, the policy pauses the job running on core 1, giving its CPU core to memcached. When the CPU usage is low, the paused job is resumed or a new job is started, and memcached is restricted to core 0. The policy ends when all jobs have finished, and memcached has run for an additional 60 seconds.
+
+    % CPU usage is only measured on the cores running memcached. It's considered high if it's more than 80% on one core or the combined usage of two cores is less than 130%.
+
+    % The policy sequentially assigns core 1 to canneal, vips, blackscholes, and dedup jobs, while cores 2 and 3 are exclusively and sequentially allocated to ferret, freqmine, adn radix.
+
+    % Once ferret and freqmine finish, the other jobs initially set to run only on core 1 are allowed to use cores 2 and 3 as well.
+    
+    \item How do you decide how many cores to dynamically assign to memcached? Why?
+    
+    
+    \textbf{Answer:}
+     Memcached starts running on only one core. The policy assigns two cores to it when the CPU utilization is over 80\% When the CPU is less than 130\% when summing both the utilization of core 0 and 1, memcached is scaled back down to core 0.
+ 
+     We decided to use this value as a threshold after seeing the results from the combined measure of latency and CPU using 2 threads of the previous point. We observed that until 80\% of CPU utilization, the latency was not affected. However, after that point, the latency started to increase and we need to switch.
+
+     Additionally the 130\% worked well, because we noticed that when splitting the load between 2 processors the load on each processor did not exactly halved. Rather, it was higher than expected. Thus the combined load was set to a combined 130\% because after fusing the load of the two processors into one, the load was typically around 70\% and not maxed at 100\% as would be expected from putting together a combined load of 130\%. This behavior may be due to the fact that the operating system's scheduling mechanism may lead to uneven distribution of load, creating an imbalance in CPU usage. Imperfectly balanced threads and additional overheads from multithreading could consume more CPU time.
+ 
+     This strategy is designed with the aim of optimizing resource use while ensuring smooth operations and effective system performance. When the system is under high load (CPU utilization above 80\%), assigning an extra core to memcached helps to improve its performance by allowing it to process more data concurrently assuring the SLO of 1ms 95th percentile latency is not violated, as high CPU utilization correlates to the number of QPS that memcached is receiving.
+     
+     Conversely, when the CPU utilization is relatively low (combined utilization of both cores less than 130\%), it is more efficient to limit memcached to a single core, freeing up resources for other processes or jobs that might require them, reducing the overall time of execution of the PARSEC jobs. This dynamic and responsive approach ensures a balanced, efficient use of system resources. 
+
+    \item How do you decide how many cores to assign each PARSEC job? Why?
+
+     \textbf{Answer:}
+
+     \begin{itemize}
+        \item \colored{blackscholes}: This job is assigned to core 1 sequentially following the scheduling policy, given that although it can benefit from parallelism its execution time is not one of the longest.
+        
+        \item \colored{canneal}: Similar to blackscholes, this job is also assigned to core 1 in sequence. According to the analysis in Part 1-2 Canneal is not a CPU-intensive task and it is also not one of the longest jobs. Therefore, it is not necessary to assign more than one core to it.
+        
+        \item \colored{dedup}: Dedup, too, is allocated to core 1 sequentially. This job is not very CPU-intensive, and also does not benefit from parallelism as much as other jobs. Moreover it is a very fast job.
+    
+        \item \colored{ferret}: Ferret is assigned to cores 2 and 3 exclusively, according to the policy. As a parallel search engine, ferret is a CPU-intensive task that benefits from multiple cores to improve its parallel execution. 
+        
+        \item \colored{freqmine}: Similar to ferret, freqmine also utilizes cores 2 and 3. As an application which performs frequent itemset mining, freqmine is a computationally intensive task and thus requires multiple cores to optimize its performance. Ferret together with freqmine are the two benchmarks that take the longer to execute, therefore any improvement on these will have a big impact on the overall runtime. Therefore, two cores were assigned to both of them.
+        As mentioned before, in case ferret and freqmine finished before the other jobs running in core 1, these jobs will be also allowed to use these two core, as this was a scenario that happened sometimes in out testing.
+
+        \item \colored{radix}: Radix is assigned to cores 2 and 3, before ferret and freqmine started. Radix was observed to have a good response to parallelism and to be really fast. Additionally, ferret and freqmine run in around 10 minutes total. Thus, there was some time available once they had finished to run one of the other jobs. These times matched more closely to the execution time of radix.
+        
+        \item \colored{vips}: Like blackscholes, canneal, and dedup, vips is allocated to core 1 sequentially. As an image processing system, vips requires high computational resources, but according to the analysis in Part 1-2 is less intensive than ferret or freqmine and, therefore, is allocated only one core.
+ 
+    \end{itemize}
+
+
+    \item How many threads do you use for each of the PARSEC job? Why?
+    
+    \textbf{Answer:}
+    \begin{itemize}
+        \item \colored{blackscholes}: For blackscholes, we allocate only one thread as the job runs on a single core (core 1). Multiple threads wouldn't improve performance significantly and might increase overhead due to context switching.
+        
+        \item \colored{canneal}: As stated, one thread is provided to canneal as it is allocated a single core. More threads would increase overhead without noticeable performance gain.
+        
+        \item \colored{dedup}: Dedup also receives one thread, due to its allocation on a single core. Similar reasoning to canneal and blackscholes applies here.
+        
+        \item \colored{ferret}: Ferret, being allocated cores 2 and 3, uses two threads to fully exploit the parallel processing capacity of the two cores. This approach significantly enhances its parallel execution performance.
+        
+        \item \colored{freqmine}: Freqmine also uses two threads corresponding to its allocation on cores 2 and 3. This allows the job to leverage the full computational potential of the two cores, improving its performance.
+        
+        \item \colored{radix}: Radix follows a similar policy to freqmine, and ferret, with two threads assigned due to its allocation on two cores (core 2 and 3).
+        
+        \item \colored{vips}: Vips is also allocated a single core (core 1) and thus uses one thread. Similar to blackscholes, canneal, and dedup, multiple threads would not improve performance significantly and might increase overhead due to context switching.
+    \end{itemize}
+      
+    \item Which jobs run concurrently / are collocated and on which cores? Why?
+
+    \textbf{Answer:} No job is run concurrently with another on the same core. Instead, jobs are allocated to cores in a sequential manner to avoid resource contention and ensure optimal execution. Memcached starts on core 0 and can expand to core 1 if the CPU utilization exceeds 80\%. On core 1, jobs blackscholes, canneal, dedup, and vips run sequentially, not concurrently. These jobs are queued up for execution on core 1 in the order they're mentioned. They may, however, be temporarily paused if memcached needs to expand to core 1 due to high CPU utilization.
+
+     Jobs ferret, freqmine, and radix are allocated cores 2 and 3 exclusively, running sequentially on these cores. Once ferret and freqmine are finished, the other jobs initially set to run only on core 1 are allowed to run on cores 2 and 3 as well.
+
+     While some jobs can be putted together to improve the total runtime of the scheduler like we did in part 3 the overhead to pause and unpause two or more jobs on core 1 can become too much to respond quickly to the changing QPS of memcached. ferret and freqmine which run on cores 2 and 3 are not run with other jobs because this is only going to slow down the total runtime.
+     
+     This design is in place to avoid resource contention and ensure each job gets exclusive access to a core for a period of time. Memcached, as a critical service, gets preferential treatment, with the ability to claim an additional core if needed.
+    
+    \item In which order did you run the PARSEC jobs? Why?
+
+    \textbf{Order}: % Sort them 
+
+    \begin{itemize}
+        \item Core 1: \colored{canneal}, \colored{vips}, \colored{blackscholes}, \colored{dedup}
+        \item Core 2 and 3: \colored{radix}, \colored{ferret}, \colored{freqmine}
+    \end{itemize}
+    
+    \textbf{Why:} % Put your solution here
+     There is actually not a reason for this ordering as all jobs are run sequentially and, therefore, there is no contention between them.
+
+\item How does your policy differ from the policy in Part 3? Why?
+
+\textbf{Answer:} % Put your solution here
+In Part 3, the policy did not involve dynamically adjusting the number of running jobs based on the CPU utilization of the system and neither changing the number of cores of memcached or other applications.
+
+In contrast, the policy in Part 4 involves dynamically adjusting the number of running containers based on the CPU utilization of the system. The policy uses the psutil library to monitor the CPU utilization of the system, and pauses and unpauses containers based on the CPU utilization. If the CPU utilization is too high, some of the containers are paused to free up resources. If the CPU utilization is low, some of the paused containers are resumed to make use of the available resources.
+
+The main reason for this difference is that the policy in Part 4 is more flexible and can adapt to changes in the CPU utilization of the system. By dynamically adjusting the number of running containers, the policy can ensure that the system is using the available resources efficiently, while also maximizing the performance of the system. In contrast, the policy in Part 3 is more static and does not adapt to changes in the CPU utilization of the system.
+
+We also changed the policy from running all in parallel to running just two jobs in parallel in different cores due to the reduced number of total core available.
+
+\item How did you implement your policy? e.g., docker cpu-set updates, taskset updates for memcached, pausing/unpausing containers, etc.
+
+\textbf{Answer:} The policy implementation involves adjusting the CPU affinity of the 'memcached' process using the \texttt{taskset} command, creating and running Docker containers for PARSEC jobs with specified CPU cores, pausing and unpausing Docker containers, and updating the cores of Docker containers. The implementation also involves monitoring the CPU utilization and adjusting the CPU affinity of 'memcached' accordingly.
+We created several functions to implement the policy:
+
+\begin{itemize}
+    \item The \texttt{adjust\_memcached\_resources} function uses the \texttt{subprocess} module to call \texttt{taskset} with the following parameters:
+      \begin{itemize}
+      \item \texttt{\-cp} followed by the CPU cores to which `memcached` should be bound, specified as a comma-separated list of integers.
+      \item \texttt{memcached\_pid}, which is the process ID of the `memcached` process.
+    This is used to reschedule memcached to core 0 or to core 0 and 1 depending on the load.
+    \end{itemize}
+      
+    \item The \texttt{create\_job} function uses the Docker API to create a Docker container with the following parameters:
+      \begin{itemize}
+      \item \texttt{image}: the name of the Docker image to use for the container.
+      \item \texttt{command}: the command to run inside the container.
+      \item \texttt{cpuset\_cpus}: a string specifying the CPU cores to which the container should be bound, in the format "0,1" for example.
+      \item \texttt{detach=True}: a boolean indicating whether the container should be detached from the calling terminal.
+      \item \texttt{name}: a name for the container.
+    
+      We use this function to create all of the containers at the beginning so that we can just simply start them when they are needed.
+    \end{itemize}
+      
+    \item The \texttt{update\_job\_cores} function uses the Docker API to update the CPU cores of a Docker container with the following parameters:
+      \begin{itemize}
+      \item \texttt{container}: the name or ID of the container to update.
+      \item \texttt{cpuset\_cpus}: a string specifying the new CPU cores to which the container should be bound. 
+    
+      This is used in our scheduler if, once the tasks initially assigned to cores 2 and 3 have finished, there are tasks still pending that were assigned to core 1.
+      \end{itemize}
+    \item The \texttt{pause\_job} and \texttt{unpause\_job} functions respectively pause and resume a Docker container using the Docker API. The \texttt{pause\_job} function takes the following parameters:
+    \begin{itemize}
+    \item \texttt{container}: the name or ID of the container to pause.
+    \end{itemize}
+    The \texttt{unpause\_job} function takes the same parameter. These functions are used to pause and resume containers based on the CPU utilization. If the CPU utilization is too high, and memcached is scheduled to core 1 as well we pause the running container on this core to free up resources. If the CPU utilization is low, we resume some of the paused containers to make use of the available resources.
+\end{itemize}
+
+ 
+The `main` function creates and runs Docker containers for PARSEC jobs with specified CPU cores, monitors the CPU utilization, and adjusts the CPU affinity of `memcached` accordingly. It also pauses and unpauses Docker containers and updates the cores of Docker containers based on the CPU utilization using the functions described above.
+
+\item Describe the design choices, ideas and trade-offs you took into account while creating your scheduler (if not already mentioned above):
+
+\textbf{Answer:} Most of these aspects were already explained before. Perhaps the trade-offs aspect requires more detail. The main trade-off that was made was to decide which tasks to run exclusively in cores 2 and 3. This was done according to the results of Part 1-2 as ferret and freqmine were the more CPU intensive. Additionally, the choice to run radix also in these cores, was made due to the fact that its execution time matched precisely the additional time that jobs allocated to core 1 took to complete once ferret and freqmine were done.
+
+\end{itemize}
+
+\item \textbf{[23 points]} Run the following \texttt{mcperf} memcached dynamic load trace: 
+    
+\begin{Verbatim}[fontsize=\small]
+$ ./mcperf -s INTERNAL_MEMCACHED_IP --loadonly 
+$ ./mcperf -s INTERNAL_MEMCACHED_IP -a INTERNAL_AGENT_IP \ 
+           --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 1800 \ 
+           --qps_interval 10 --qps_min 5000 --qps_max 100000 \ 
+           --qps_seed 3274
+\end{Verbatim}
+    
+    Measure memcached and PARSEC performance when using your scheduling policy to launch workloads and dynamically adjust container resource allocations. Run this workflow 3 separate times. For each run, measure the execution time of each PARSEC job, as well as the latency outputs of memcached. For each PARSEC application, compute the mean and standard deviation of the execution time across three runs. Compute the mean and standard deviation of the total time to complete all jobs. Fill in the table below.  Also, compute the SLO violation ratio for memcached for each of the three runs; the number of data points with 95th percentile latency $>$ 1ms, as a fraction of the total number of datapoints.  You should only report the runtime, excluding time spans during which the container is paused.
+
+    \textbf{Answer:}
+    % Put your solution here
+    \begin{table}[ht]
+        \centering
+        \begin{tabular}{ |c|c|c|c|c|} 
+            \hline
+            job name & mean time [s] & std [s] \\ \hline \hline
+            \coloredcell{blackscholes}    & 114.85 & 4.60 \\  \hline
+            \coloredcell{canneal}         & 237.43 & 20.45 \\  \hline
+            \coloredcell{dedup}           & 38.01& 0.76\\  \hline
+            \coloredcell{ferret}          & 213.68& 13.85\\  \hline
+            \coloredcell{freqmine}        & 411.50 & 3.95\\  \hline
+            \coloredcell{radix}           & 26.38 & 1.39 \\  \hline
+            \coloredcell{vips}            & 118.06 & 2.62 \\  \hline
+            total time      & 680.33 & 32.42\\  \hline
+        \end{tabular}
+    \end{table}
+
+    SLO violation ratio for memcached:
+    \begin{itemize}
+        \item Run 0: 0\% SLO violation
+        \item Run 1: 1.32\% SLO violation (1 data point over 76)
+        \item Run 2: 1.32\% SLO violation (1 data point over 76)
+       \end{itemize}
+
+   \FloatBarrier
+    
+   Include six plots -- two plots for each of the three runs -- with the following information. Label the plots as 1A, 1B, 2A, 2B, 3A, and 3B where the number indicates the run and the letter indicates the type of plot (A or B), which we describe below. In all plots, time will be on the x-axis and you should annotate the x-axis to indicate which PARSEC benchmark starts executing at which time. If you pause/unpause any workloads as part of your policy, you should also indicate the timestamps at which jobs are paused and unpaused. All the plots will have have two y-axes. The right y-axis will be QPS. For Plots A, the left y-axis will be the 95th percentile latency. For Plots B, the left y-axis will be the number of CPU cores that your controller allocates to memcached. For the plot, use the colors proposed in this template (you can find them in \texttt{main.tex}).
+
+   \textbf{Plots:} % Put your plots here
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot3_1A.pdf}
+        % \caption{Plot 1A}
+        \label{fig:plot1A}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot3_1B.pdf}
+        % \caption{Plot 1B}
+        \label{fig:plot1B}
+    \end{figure}
+
+    \begin{figure}[hhtbpt]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot3_2A.pdf}
+        % \caption{Plot 2A}
+        \label{fig:plot2A}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot3_2B.pdf}
+        % \caption{Plot 2B}
+        \label{fig:plot2B}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot3_3A.pdf}
+        % \caption{Plot 3A}
+        \label{fig:plot3A}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot3_3B.pdf}
+        % \caption{Plot 3B}
+        \label{fig:plot3B}
+    \end{figure}
+
+
+    \newpage
+
+
+    \item \textbf{[16 points]} Repeat Part 4 Question 3 with a modified \texttt{mcperf} dynamic load trace with a 5 second time interval (\texttt{qps\_interval}) instead of 10 second time interval. Use the following command: 
+    
+\begin{Verbatim}[fontsize=\small]
+$ ./mcperf -s INTERNAL_MEMCACHED_IP --loadonly 
+$ ./mcperf -s INTERNAL_MEMCACHED_IP -a INTERNAL_AGENT_IP \ 
+           --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 1800 \ 
+           --qps_interval 5 --qps_min 5000 --qps_max 100000 \ 
+           --qps_seed 3274
+\end{Verbatim}
+    
+    You do not need to include the plots or table from Question 3 for the 5-second interval. Instead, summarize in 2-3 sentences how your policy performs with the smaller time interval (i.e., higher load variability) compared to the original load trace in Question 3. 
+
+    \textbf{Summary:} Managing the 5-second interval trace was more challenging than the 10-second one, reflected by higher Service Level Objective (SLO) violation ratios. The first and second experiments recorded SLO violation ratios around 3.5\% (5/134), whereas before we had rarely any. The total runtime didn't actually change compared with the 10-second interval trace.
+
+    What is the SLO violation ratio for memcached (i.e., the number of datapoints with 95th percentile latency $>$ 1ms, as a fraction of the total number of datapoints) with the 5-second time interval trace? 
+    
+    \textbf{Answer:} The SLO violation ratio for memcached with the 5-second time interval trace is approximately 3.73\% (5/134) for the first experiment and 2.98\% (4/134) with the 5-second time interval trace. Therefore, we were not consistently under 3\%.
+    
+    What is the smallest \texttt{qps\_interval} you can use in the load trace that allows your controller to respond fast enough to keep the memcached SLO violation ratio under 3\%? 
+    
+    \textbf{Answer:} The smallest interval was 6. We did three different runs, all with SLOs under 3\% with the following \texttt{qps\_interval} values: 2/134 = 1.49\%, 4/134 = 2.98\%, 2/134 = 1.49\%.
+
+    What is the reasoning behind this specific value? Explain which features of your controller affect the smallest \texttt{qps\_interval} interval you proposed.
+  
+    \textbf{Answer:} The features of the controller that may not be able to respond to faster QPS include the CPU utilization monitoring, the container management, and the dynamic container adjustment strategy as well the taskset command of memcached.
+
+    If the QPS changes too frequently, the controller may not be able to keep up with the changes and respond quickly enough to prevent SLO violations. For example, if there is a sudden drop in CPU utilization between two peaks, we may respond to the drop and downscale memcached. However, if the next peak comes, we may not hbe able to handle the peak and upscale again memcached without violating the SLO. However, if we are not very responsive the time to execute PARSEC jobs will increase, so there should be a balance between responsiveness and stability.
+    
+    \vspace{4cm}
+
+    Use this \texttt{qps\_interval} in the command above and collect results for three runs. Include the same types of plots (1A, 1B, 2A, 2B, 3A, 3B) and table as in Question 3. 
+    
+    \textbf{Plots:} % Put your plots here
+    
+    \begin{table}[ht]
+        \centering
+        \begin{tabular}{ |c|c|c|c|c|} 
+            \hline
+            job name & mean time [s] & std [s] \\ \hline \hline
+            \coloredcell{blackscholes}     & 111.75 & 2.40 \\  \hline
+            \coloredcell{canneal}          & 225.92 & 0.45\\  \hline
+            \coloredcell{dedup}            & 38.18  & 2.86 \\  \hline
+            \coloredcell{ferret}           & 202.06 & 0.57 \\  \hline
+            \coloredcell{freqmine}         & 411.90 & 4.81 \\  \hline
+            \coloredcell{radix}            & 25.16 & 0.36\\  \hline
+            \coloredcell{vips}             & 116.26 & 1.22 \\  \hline
+            total time      & 665.29 & 11.33\\  \hline
+        \end{tabular}
+    \end{table}
+
+    \vspace{10cm}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot4_1A.pdf}
+        % \caption{Plot 1A}
+        \label{fig:plot1A-2}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot4_1B.pdf}
+        % \caption{Plot 1B}
+        \label{fig:plot1B-2}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot4_2A.pdf}
+        % \caption{Plot 2A}
+        \label{fig:plot2A-2}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot4_2B.pdf}
+        % \caption{Plot 2B}
+        \label{fig:plot2B-2}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot4_3A.pdf}
+        % \caption{Plot 3A}
+        \label{fig:plot3A-2}
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=1\linewidth]{figures/part4/plot4_3B.pdf}
+        % \caption{Plot 3B}
+        \label{fig:plot3B-2}
+    \end{figure}
+    
+\end{enumerate}

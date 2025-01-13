@@ -1,0 +1,42 @@
+Job:  parsec-blackscholes-2core
+Job time:  0:00:37
+Job:  parsec-blackscholes-4core
+Job time:  0:01:02
+Job:  parsec-blackscholes-8core
+Job time:  0:01:16
+Job:  parsec-canneal-2core
+Job time:  0:01:32
+Job:  parsec-canneal-4core
+Job time:  0:02:05
+Job:  parsec-canneal-8core
+Job time:  0:03:10
+Job:  parsec-dedup-2core
+Job time:  0:00:17
+Job:  parsec-dedup-4core
+Job time:  0:00:24
+Job:  parsec-dedup-8core
+Job time:  0:00:19
+Job:  parsec-ferret-2core
+Job time:  0:02:08
+Job:  parsec-ferret-4core
+Job time:  0:02:38
+Job:  parsec-ferret-8core
+Job time:  0:03:40
+Job:  parsec-freqmine-2core
+Job time:  0:02:44
+Job:  parsec-freqmine-4core
+Job time:  0:03:27
+Job:  parsec-freqmine-8core
+Job time:  0:04:08
+Job:  parsec-radix-2core
+Job time:  0:00:17
+Job:  parsec-radix-4core
+Job time:  0:00:25
+Job:  parsec-radix-8core
+Job time:  0:00:31
+Job:  parsec-vips-2core
+Job time:  0:00:50
+Job:  parsec-vips-4core
+Job time:  0:01:04
+Job:  parsec-vips-8core
+Job time:  0:00:56

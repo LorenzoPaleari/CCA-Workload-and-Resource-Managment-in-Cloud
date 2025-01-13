@@ -1,0 +1,8 @@
+Job,Start,End
+canneal,0.0,123.0
+dedup,2.0,26.0
+vips,2.0,74.0
+blackscholes,4.0,76.0
+ferret,2.0,144.0
+freqmine,1.0,126.0
+radix,3.0,90.0

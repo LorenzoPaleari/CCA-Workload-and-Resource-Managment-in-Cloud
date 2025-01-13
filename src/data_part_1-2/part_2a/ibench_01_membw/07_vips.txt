@@ -1,0 +1,6 @@
+[PARSEC] [---------- Beginning of output ----------]
+
+real	3m5.148s
+user	2m50.124s
+sys	0m5.052s
+[PARSEC] [----------    End of output    ----------]

@@ -1,0 +1,6 @@
+QUERY TIME: 82.084 seconds
+
+real	1m22.222s
+user	10m45.462s
+sys	0m1.482s
+[PARSEC] [----------    End of output    ----------]
