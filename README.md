@@ -52,8 +52,6 @@ To replicate the experiments, follow these instructions:
 2. **Part 3 and Part 4**:
    - Refer to the README files in the respective folders for implementation details and execution steps. [`Part 3 README`](./src/part3/README.md) - [`Part 4 README`](./src/part4/README.md).
 
----
-
 ## Results
 
 ### Highlights
